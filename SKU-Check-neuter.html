@@ -1,0 +1,392 @@
+<html>
+<head>
+<title>IMAGE LOOKUP v3.5.5 by Topher Null - Neutered</title>
+<link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/nlfbmbojpeacfghkpbjhddihlkkiljbi">
+<!--
+
+Version: v3.5.5
+20171019
+Author Christopher String
+This webpage DOES NOT ALLOW users to plug in an IR ID and have the following functionality available to them:
+ONLY individual SKUS may be entered!
+
+===================
+Implemented:
+1.	Display / pre-load images for the skus given a space delimited list of skus
+2.	Allow users to select SKUS for CSV export (no multi or shift click option, sorry)
+3.	export into CSV
+4.  view skus via job
+5.  display coupedoor/moredoor assets for wheel generator if they exist
+6.  Duplicate skus are removed before the display function is run, prevents export errors
+7.  Ability to show LARGE size images for COPY's needs
+===================
+Not Implemented yet:
+
+===================
+
+
+COLOUR PALETTE FROM HERE
+http://www.colourlovers.com/palette/3739957/Snow_Change
+-->
+
+
+<style>
+
+body {font-family: helvetica; font-size:12px;}
+p {line-height:1.5em;}
+
+form input, #exportcsv {padding:1em;border:none;}
+form#ir_form{font-size:1.3em;text-align:center;padding:0;margin:auto;}
+#ir_name{border: 1px #d0d0d0 solid;}
+
+ul {list-style-type:none;}
+li.odd {background-color:#f1f1f1;}
+li.main-image{background-color:#f2a85d;} /*F19231*/
+li.coupedoor, li.moredoor{background-color:#99D9DD;}
+#generator_help span {font-weight:bold; color:#49b8bf;}
+li.sku{padding:2em;font-size:1.5em;color:#666666;cursor: text;}
+li.selected{background-color:#f8b067;}
+
+ul.skuimage-list li {float:left;}
+.sku-name {padding:1em;}
+.skuimage-list img{margin:.5em;}
+ul#parentskulist{padding:0;}
+CANCEL.clear {clear: both;}
+.clearfix::after { 
+   content: " ";
+   display: block; 
+   height: 0; 
+   clear: both;
+   *zoom: expression( this.runtimeStyle['zoom'] = '1', this.innerHTML += '<div class="ie7-clear"></div>' );
+}
+
+.ie7-clear {
+    display: block;
+    clear: both;
+}
+
+#sku_submit{background-color:#DA0A62;color:#ffffff;font-weight:bold;cursor: pointer; cursor: hand;}
+#exportcsv{background-color:#DA0A62;width:100%;text-align:center;margin:3em 0em;color:#ffffff;padding:2em 0em;}
+#exportcsv:hover,.sku-name{cursor: pointer; cursor: hand;}
+#exportcsv:hover, #sku-submit:hover{background-color:#DA0A62;}
+.sku-name:hover{background-color:#eca862;color:#fff;}
+li.selected ul li.sku {color:#ffffff;}
+.hidden {display:none;}
+
+div#buttz{width:610px; margin:auto;}
+div#spanid{text-align:left;line-height:1.5em;font-size:.8em;margin:auto;width:550px;padding:0;}
+a#clickhelp, a{cursor: pointer; cursor: hand;font-weight:bold;color:#DA0A62;font-size:.8em;text-decoration:none;}
+a#clickhelp:hover{color:#301231;}
+
+#exportcsv.disabled{background-color:#333;cursor:not-allowed;}
+#allnone, .mainall {font-weight:bold; cursor: pointer; cursor: hand;font-weight:bold;color:#DA0A62;font-size:.8em;text-decoration:none;}
+#allnone:hover{color:#301231;}
+</style>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+<script>
+
+
+// ==============================================================
+// begin custom function blocks here
+// ==============================================================
+
+function objIDtoSku(objIDcsv,sheetID,ops){
+
+	console.log("inside objIDtoSku function");
+	// objIDtoSku accepts the resultsArray that contain JSON Objects
+	var data = null;
+	var xhr = new XMLHttpRequest();
+	//xhr.withCredentials = true;
+	xhr.onload = function()
+	{
+		var arrayOfSkus=[];
+		var bigJSON = JSON.parse(this.responseText);
+		console.log(bigJSON);
+		var columnID = '';
+		// find the damn COLUMN ID
+		for (var i=0, len=bigJSON.columns.length; i<len; i++){
+			//did we find it?
+			//console.log(bigJSON.columns[i].title.toUpperCase());
+				if (bigJSON.columns[i].title.toUpperCase() == "SKU"){columnID=bigJSON.columns[i].id;} // end test!
+
+		} // end columnID search block! now search for the IDS of the rows!
+		
+		for (var i=1, len=bigJSON.rows.length; i<len; i++){
+			// nested for loop LAME
+			console.log("we're inside the loop: "+i);
+			console.log("size of the inner cell array: "+bigJSON.rows[i].cells.length);
+			for (var j=0, jen=bigJSON.rows[i].cells.length; j<jen; j++){
+					if(bigJSON.rows[i].cells[j].columnId==columnID){arrayOfSkus.push(bigJSON.rows[i].cells[j].value);} //add the SKU to the arrayOSkus array.			
+			} //end of the cell iterationloop
+		} // end row search!
+		sendToHeaven(arrayOfSkus,true,ops);
+	}
+	//alert(xhr.onload);
+	var xhrSearchString ="https://api.smartsheet.com/2.0/sheets/"+sheetID+"/?rowIds="+objIDcsv;
+	xhr.open("GET", xhrSearchString);
+	xhr.setRequestHeader("content-type", "application/json");
+	xhr.setRequestHeader("cache-control", "no-cache");
+	xhr.setRequestHeader("postman-token", "1e96ee89-91e4-4988-eb7a-b934f0d34d6b");
+	xhr.send(data);
+
+
+} // end objIDtoSKU function block
+
+
+function returnResults(jobNumber,ops){
+
+	console.log("the job number inside of returnResults: "+jobNumber);
+	console.log("inside returnResults function with jobnum: "+jobNumber);
+	//returnResults takes the jobNumber, searches and finds the parentObjectID (that's the sheet duh) and returns it.
+	var data = null;
+	var xhr = new XMLHttpRequest();
+	//xhr.withCredentials = true;
+
+	xhr.onload = function()
+	{
+		var objJSON = JSON.parse(this.responseText);
+		var jsonDataArray=[];
+		var resultsArray=[]; // this is the array we're returning at the end it contains all of the objectID where parentObjectId is jsonDataArray[0].parentObjectID
+		console.log("strIR was entered, now set the jsonDataArray = objJSON.results");
+		jsonDataArray = objJSON.results;
+		console.log(jsonDataArray);
+		if (jsonDataArray.length==0){$("#buttz").remove();alert("Job Does Not Exist");}else{
+		for (var i=0; i<jsonDataArray.length; i++){
+		
+			// we're only pushing json objects onto this resultsArray that match the parentObjectId to the jsonDataArray[0].parentObjectId;
+			if (jsonDataArray[i].objectType == "row"){
+				resultsArray.push(jsonDataArray[i].objectId);// resultsArray is an array of ONLY objectID strings
+			} // end test case				
+		} //end iterating through the nested jsonDataArray loop now with resultsArray full of JSON objects, let's make a FINAL RESULTS array to return!!!
+		
+		var resultsArrayToCSV=resultsArray.join(); // we're passing the resultsArrayToCSV to make it easier to make our query for the final function!
+
+		//debugger;
+		objIDtoSku(resultsArrayToCSV,jsonDataArray[0].parentObjectId,ops);
+		} // end checking if the damn job exists
+		console.log("exiting returnResults function");
+	}
+
+
+	var xhrSearchString ="https://api.smartsheet.com/2.0/search?query="+jobNumber;
+	xhr.open("GET", xhrSearchString);
+	xhr.setRequestHeader("authorization", "Bearer authorizationtokenhere");
+	xhr.setRequestHeader("content-type", "application/json");
+	xhr.setRequestHeader("cache-control", "no-cache");
+	xhr.setRequestHeader("postman-token", "1e96ee89-91e4-4988-eb7a-b934f0d34d6b");
+	try{xhr.send(data);} catch(strException){throw strException;}
+
+
+} // end function returnResults
+
+
+
+function returnSKUarray(jobNumber){
+	/*
+	deprecated
+	*/
+	console.log("inside of returnSKUarray, with jobNumber="+jobNumber);
+	console.log("lets run returnResults: ");
+	console.log("the end of returnSKUarray function before: "+returnResults(jobNumber));
+
+} // end returnSKUarray function
+
+
+
+function longWayToRedemption(event)
+{
+	$("#spanid").hide();
+	$("#exportcsv").remove();
+	$("#parentskulist").remove();
+	$("#buttz").slideUp(500).remove();
+	
+	//debugger;
+	
+	/* do stuff to get the final array of products just like its the SKU check array and set inputToArray equal to it*/	
+	var irName = $("#ir_name").val();
+
+	if(irName.search(/^(o-|p-|pv-|oj-|pj-|pjv-|ot-|pt-|ptv-|osilv-|psilv-|pvsilv-|oram-|pram-|pvram-|osierra-|psierra-|pvsierra-)/i)>=0)
+		{
+
+		$("body").append("<div id='buttz'>Images are loading, please be patient...<br /><img src='http://pa1.narvii.com/6477/bee9774db9aa20ea9d04b14e213d20de7486dd8a_hq.gif' width='480' height='264' alt='jerrysmith' /></div>");
+		if(irName.search(/^(oj-|pj-|pjv-)/i)>=0){var options=1;//set options to 1
+			// option = 1 / look for wheels
+			// add more options as we continue
+		}
+		try {var redemptionArray = returnResults(irName, options);} catch(strException){alert(strException);}
+		}else
+		{sendToHeaven(irName);}
+	
+		event.preventDefault();
+	return false;
+} //end redemption block
+
+function sendToHeaven(event, isIR,ops){
+//debugger;
+	var exportCSVarray=[]; // we're going to export this when they click export!
+	var inputToArray = [];//inputToArray is an array!
+	
+	if (isIR){	
+		inputToArray = event;
+		$("#buttz").remove();
+	}else{
+		$("#exportcsv").remove();
+		$("#parentskulist").remove();
+		inputToArray=$("#ir_name").val().trim().replace(/,/g,' ').replace(/\s+/g, ',').split(","); // inputToArray is now an ARRAY at this point.
+		var oldInputLength = inputToArray.length;
+		inputToArray = Array.from(new Set(inputToArray));
+		if (oldInputLength>inputToArray.length){alert("Duplicate entries were found and removed!");} //notify that duplicates were removed
+		//alert("unsanitized: "+inputToArray+"\n\rduplicates removed:"+uniqueInputToArray);
+		
+//		inputToArray=$("#ir_name").val().replace(/,/g,' ').replace(/\s+/g, ',').trim().split(",");  // OG - new one should get rid of spaces first
+	}
+	$("#credits").remove();
+	$("#help").hide();
+	// if this is just an array and we don't need to parse it, then set inputToArray to the array we're submitting in, otherwise treat it as a string input.
+	$("body").append(printArrayLoop(inputToArray,ops)).append("<div id=\"exportcsv\" class=\"disabled\"><strong>EXPORT SELECTED SKUS in CSV</strong></div><div id='credits'>Image Lookup v3.5.5 | Questions send to <a href='mailto:chris.string@turn5.com'>Topher Null</a></div>"); //end the body append
+	
+	$(".sku-name").fadeIn(1100);
+	
+	$(".sku-name").addClass("clearfix");
+	$(".sku-name:even").addClass("odd");
+	$("#search-hint").fadeIn(500);
+	$("#exportcsv").fadeIn(500); // show the export CSV div CHYEAH BOI!
+	if ($('.coupedoor').length){$('#generator_help').slideDown(500);}
+	
+	
+	$(".sku-name").click(function(){
+				$(this).toggleClass("selected");
+				var tmpSkuId = $(this).attr('id');
+				
+				if (exportCSVarray.indexOf(tmpSkuId)<0){ if (exportCSVarray.push(tmpSkuId)){}else{alert("we couldn't add it idk");} // add it!
+				}else{var result = exportCSVarray.splice(exportCSVarray.indexOf(tmpSkuId),1);} // remove that!
+				if (exportCSVarray.length){$("#exportcsv").removeClass("disabled");}else{$("#exportcsv").addClass("disabled");}
+	}); // end sku-select function
+	
+	$("#exportcsv").click(function(e){
+		if ($(this).hasClass("disabled")){}else{
+		var aLink = document.createElement('a');
+		var downloadName = prompt("Enter export sheet name.","reviewSKU");
+		if (downloadName == null){}else{
+			aLink.download = downloadName+".csv";
+			var csvOutput = exportCSVarray.toString().replace(/,/g,'\n');
+			aLink.href="data:text/csv;charset=UTF-8," + encodeURIComponent(csvOutput);
+			var mersevent = new MouseEvent('click');
+			aLink.dispatchEvent(mersevent);
+		}
+		//Interestingly enough we can use a data:URI to give us the data for download!`````
+		}
+	}); // end exportcsv click function block
+	
+		//$(".sku").click(function(){alert("you clicked on: ");});
+	
+	
+	
+	if (isIR == undefined){ return false;/*this.preventDefault();*/} // prevent stuff if we've not passed isIR flag	
+	
+	
+	
+	
+	
+	
+// heaven is a lie, please continue
+}
+
+
+// inner loop DISPLAYS THE MAIN AND THE ALT IMAGES FOR THE image_sku that is passed through
+
+function imageSkuLoop(image_sku,ops)
+{
+//alert("these are the ops: "+ops);
+var prdSize="$mproductsmall",prHei=120,prWid=160;
+//alert("we're inside of the imageSkuLoop, should be passing a SINGLE sku for image sku: "+typeof(image_sku));
+var i;
+
+if ($("#chkImgSize").is(":checked")){prHei=480;prWid=640;prdSize="$mproductlarge";} // set the properties]
+
+
+var beginnerLoopText = '\t\t\t<li class="sku clear">'+image_sku+'</li><!-- SKU goes here -->\n';
+if (image_sku.toString().search(/^j/i)>=0){beginnerLoopText+='\t\t\t<li class="coupedoor"><img src="https://turn5.scene7.com/is/image/Turn5/'+image_sku+'_2door?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Coupedoor (2 door)" onerror=\'$(this).parent().remove();\' /></li>\n\t\t\t<li class="moredoor"><img src="https://turn5.scene7.com/is/image/Turn5/'+image_sku+'_4door?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Moredoor (4 door)"  onerror=\'$(this).parent().remove();\' /></li>\n';}
+var innerLoopText='\t\t\t<li class="main-image"><img src="https://turn5.scene7.com/is/image/Turn5/'+image_sku+'?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="main image" /></li>\n';
+
+
+	for(i=1; i<16; i++) //alt image loop
+	{
+	innerLoopText+='\t\t\t<li class="alt_'+i+'"><img src="https://turn5.scene7.com/is/image/Turn5/'+image_sku+"_alt"+i+'?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="alt'+i+'" onerror=\'$(this).parent().remove();\' /></li>\n';
+
+	} // end for alt-image loop
+
+	return beginnerLoopText+innerLoopText; //returns the inner LI html
+} // end imageSkuLoop
+
+
+
+// this is the big loop for iterating through the input skus
+
+function printArrayLoop(array_sku,ops)
+{
+	console.log(array_sku);
+	// function expects an array, accept a string that's converted into an array
+	var outerLoopBeginningString = '<ul id="parentskulist">';
+	var outerLoopClosingString = '\r<!-- end parentskulist -->\r</ul>';
+
+	var outerLoopInterimString="";
+		for (var tmpIndex=0;tmpIndex<array_sku.length;tmpIndex++)
+		{
+			outerLoopInterimString+='\n\t<li class="sku-name" id="';
+			outerLoopInterimString+=array_sku[tmpIndex];
+			outerLoopInterimString+='">\n\t\t<ul class="skuimage-list">';
+			outerLoopInterimString+=imageSkuLoop(array_sku[tmpIndex],ops);
+			outerLoopInterimString+='\n\t</ul><!-- end skuimage-list -->\n\t</li><!-- end sku-name li -->\r';
+		} // end FOR LOOP!
+
+		return outerLoopBeginningString+outerLoopInterimString+outerLoopClosingString;
+} //end printArrayLoop
+
+// end function blocks
+
+
+$(document).ready(function(){
+
+$('#sku_submit').bind("click",longWayToRedemption); // take the long way to redemption
+$("#clickhelp").click(function(){$("#spanid").slideToggle();});
+$("#allnone").click(function(){ $(".sku-name").click();});
+$(".mainall").click(function(){
+	$(".mainall").toggleClass("hidden");
+
+}); // end the mainall toggle state, don't finish it ists stupid
+
+
+
+}); // end document ready
+
+
+
+
+</script>
+
+
+<body>
+
+<form id="ir_form" method="post" action="brokeit.html">
+<label><strong>Enter SKUS</strong></label>
+<input type="text" name="ir_name" id="ir_name" />
+
+<input type="checkbox" value="unchecked" id="chkImgSize" /> Large Images 
+<input type="submit" value="Show Me the Money!" id="sku_submit" /> &nbsp;&nbsp;&nbsp;<a id="clickhelp" title="Looking up jobs?">Help?</a>&nbsp;&nbsp;<br />
+<div id="spanid" class="hidden"><br />If you want to look up a job, you need to run this page in Chrome and have this <a href="https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi">extension installed</a>.
+<br/>1.) Click on add to Chrome then click the button on the top right of the window that says CORS.
+<br/>2.) In the INTERCEPTED URLs or URL patterns, you’re going to delete the one that says <strong>“*://*/*”</strong>
+<br/>3.) Replace instead with: <strong>https://api.smartsheet.com/*</strong>, <em>the https is important as well as the * wildcard</em>.
+<br/>4.) Once that’s done, click Enable cross-origin resource sharing, and carry on!
+<br/><img src="enterprogram.png" width="477" height="509" />
+</div>
+<label id="search-hint" class="hidden">Mouse over images to see which alt they correspond to<br/>Click on each <strong>Row</strong> [ <span id="allnone">All | None</span> ] to select SKUS for export | Show [ <span class="mainall hidden">Mains Only</span><span class="mainall" id="showall">All Images</span> ]</label>
+<div id="generator_help" class="hidden"><span>Wheel Generator Assets</span> are currently <span id="generator_status">showing</span></div>
+</form>
+
+
+</body>
+</html>
