@@ -51,10 +51,10 @@ ul.skuimage-list li {float:left;}
 .skuimage-list img{margin:.5em;}
 ul#parentskulist{padding:0;}
 CANCEL.clear {clear: both;}
-.clearfix::after { 
+.clearfix::after {
    content: " ";
-   display: block; 
-   height: 0; 
+   display: block;
+   height: 0;
    clear: both;
    *zoom: expression( this.runtimeStyle['zoom'] = '1', this.innerHTML += '<div class="ie7-clear"></div>' );
 }
@@ -64,7 +64,7 @@ CANCEL.clear {clear: both;}
     clear: both;
 }
 
-#sku_submit{background-color:#DA0A62;color:#ffffff;font-weight:bold;cursor: pointer; cursor: hand;}
+#sku_submit{background-color:#5dbcf2 /*#DA0A62*/;color:#ffffff;font-weight:bold;cursor: pointer; cursor: hand;}
 #exportcsv{background-color:#DA0A62;width:100%;text-align:center;margin:3em 0em;color:#ffffff;padding:2em 0em;}
 #exportcsv:hover,label,.sku-name{cursor: pointer; cursor: hand;}
 #exportcsv:hover, #sku-submit:hover{background-color:#DA0A62;}
@@ -111,13 +111,13 @@ function objIDtoSku(objIDcsv,sheetID,ops){
 				if (bigJSON.columns[i].title.toUpperCase() == "SKU"){columnID=bigJSON.columns[i].id;} // end test!
 
 		} // end columnID search block! now search for the IDS of the rows!
-		
+
 		for (var i=1, len=bigJSON.rows.length; i<len; i++){
 			// nested for loop LAME
 			console.log("we're inside the loop: "+i);
 			console.log("size of the inner cell array: "+bigJSON.rows[i].cells.length);
 			for (var j=0, jen=bigJSON.rows[i].cells.length; j<jen; j++){
-					if(bigJSON.rows[i].cells[j].columnId==columnID){arrayOfSkus.push(bigJSON.rows[i].cells[j].value);} //add the SKU to the arrayOSkus array.			
+					if(bigJSON.rows[i].cells[j].columnId==columnID){arrayOfSkus.push(bigJSON.rows[i].cells[j].value);} //add the SKU to the arrayOSkus array.
 			} //end of the cell iterationloop
 		} // end row search!
 		sendToHeaven(arrayOfSkus,true,ops);
@@ -154,13 +154,13 @@ function returnResults(jobNumber,ops){
 		console.log(jsonDataArray);
 		if (jsonDataArray.length==0){$("#buttz").remove();alert("Job Does Not Exist");}else{
 		for (var i=0; i<jsonDataArray.length; i++){
-		
+
 			// we're only pushing json objects onto this resultsArray that match the parentObjectId to the jsonDataArray[0].parentObjectId;
 			if (jsonDataArray[i].objectType == "row"){
 				resultsArray.push(jsonDataArray[i].objectId);// resultsArray is an array of ONLY objectID strings
-			} // end test case				
+			} // end test case
 		} //end iterating through the nested jsonDataArray loop now with resultsArray full of JSON objects, let's make a FINAL RESULTS array to return!!!
-		
+
 		var resultsArrayToCSV=resultsArray.join(); // we're passing the resultsArrayToCSV to make it easier to make our query for the final function!
 
 		//debugger;
@@ -201,10 +201,10 @@ function longWayToRedemption(event)
 	$("#exportcsv").remove();
 	$("#parentskulist").remove();
 	$("#buttz").slideUp(500).remove();
-	
+
 	//debugger;
-	
-	/* do stuff to get the final array of products just like its the SKU check array and set inputToArray equal to it*/	
+
+	/* do stuff to get the final array of products just like its the SKU check array and set inputToArray equal to it*/
 	var irName = $("#ir_name").val();
 
 	if(irName.search(/^(o-|p-|pv-|oj-|pj-|pjv-|ot-|pt-|ptv-|osilv-|psilv-|pvsilv-|oram-|pram-|pvram-|osierra-|psierra-|pvsierra-)/i)>=0)
@@ -218,7 +218,7 @@ function longWayToRedemption(event)
 		try {var redemptionArray = returnResults(irName, options);} catch(strException){alert(strException);}
 		}else
 		{sendToHeaven(irName);}
-	
+
 		event.preventDefault();
 	return false;
 } //end redemption block
@@ -227,8 +227,8 @@ function sendToHeaven(event, isIR,ops){
 //debugger;
 	var exportCSVarray=[]; // we're going to export this when they click export!
 	var inputToArray = [];//inputToArray is an array!
-	
-	if (isIR){	
+
+	if (isIR){
 		inputToArray = event;
 		$("#buttz").remove();
 	}else{
@@ -239,32 +239,32 @@ function sendToHeaven(event, isIR,ops){
 		inputToArray = Array.from(new Set(inputToArray));
 		if (oldInputLength>inputToArray.length){alert("Duplicate entries were found and removed!");} //notify that duplicates were removed
 		//alert("unsanitized: "+inputToArray+"\n\rduplicates removed:"+uniqueInputToArray);
-		
+
 //		inputToArray=$("#ir_name").val().replace(/,/g,' ').replace(/\s+/g, ',').trim().split(",");  // OG - new one should get rid of spaces first
 	}
 	$("#credits").remove();
 	$("#help").hide();
 	// if this is just an array and we don't need to parse it, then set inputToArray to the array we're submitting in, otherwise treat it as a string input.
 	$("body").append(printArrayLoop(inputToArray,ops)).append("<div id=\"exportcsv\" class=\"disabled\"><strong>EXPORT SELECTED SKUS in CSV</strong></div><div id='credits'>Image Lookup v3.5.5 | Questions send to <a href='mailto:chris.string@turn5.com'>Topher Null</a></div>"); //end the body append
-	
+
 	$(".sku-name").fadeIn(1100);
-	
+
 	$(".sku-name").addClass("clearfix");
 	$(".sku-name:even").addClass("odd");
 	$("#search-hint").fadeIn(500);
 	$("#exportcsv").fadeIn(500); // show the export CSV div CHYEAH BOI!
 	if ($('.coupedoor').length){$('#generator_help').slideDown(500);}
-	
-	
+
+
 	$(".sku-name").click(function(){
 				$(this).toggleClass("selected");
 				var tmpSkuId = $(this).attr('id');
-				
+
 				if (exportCSVarray.indexOf(tmpSkuId)<0){ if (exportCSVarray.push(tmpSkuId)){}else{alert("we couldn't add it idk");} // add it!
 				}else{var result = exportCSVarray.splice(exportCSVarray.indexOf(tmpSkuId),1);} // remove that!
 				if (exportCSVarray.length){$("#exportcsv").removeClass("disabled");}else{$("#exportcsv").addClass("disabled");}
 	}); // end sku-select function
-	
+
 	$("#exportcsv").click(function(e){
 		if ($(this).hasClass("disabled")){}else{
 		var aLink = document.createElement('a');
@@ -279,18 +279,18 @@ function sendToHeaven(event, isIR,ops){
 		//Interestingly enough we can use a data:URI to give us the data for download!`````
 		}
 	}); // end exportcsv click function block
-	
+
 		//$(".sku").click(function(){alert("you clicked on: ");});
-	
-	
-	
-	if (isIR == undefined){ return false;/*this.preventDefault();*/} // prevent stuff if we've not passed isIR flag	
-	
-	
-	
-	
-	
-	
+
+
+
+	if (isIR == undefined){ return false;/*this.preventDefault();*/} // prevent stuff if we've not passed isIR flag
+
+
+
+
+
+
 // heaven is a lie, please continue
 }
 
@@ -345,6 +345,26 @@ function printArrayLoop(array_sku,ops)
 		return outerLoopBeginningString+outerLoopInterimString+outerLoopClosingString;
 } //end printArrayLoop
 
+
+function getQueryVariable(variable)
+{
+       var query = window.location.search.substring(1);
+       var vars = query.split("&");
+       for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+       }
+       return(false);
+}
+
+
+
+
+
+
+
+
+
 // end function blocks
 
 
@@ -355,6 +375,11 @@ $("#clickhelp").click(function(){$("#spanid").slideToggle();});
 $("#allnone").click(function(){ $(".sku-name").click();});
 $(".mainall").click(function(){
 	$(".mainall").toggleClass("hidden");
+
+
+if (getQueryVariable("color")){alert("this is the color",getQueryVariable("color"));}
+
+
 
 }); // end the mainall toggle state, don't finish it ists stupid
 
