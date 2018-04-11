@@ -299,22 +299,24 @@ function sendToHeaven(event, isIR,ops){
 
 function imageSkuLoop(image_sku,ops)
 {
-//alert("these are the ops: "+ops);
+
+if (getQueryVariable("color")==false){colorParameters="obj=car&color=120,44,180&gloss=60&";}else{colorParameters="";}
 var prdSize="",prHei=240,prWid=320;
-//alert("we're inside of the imageSkuLoop, should be passing a SINGLE sku for image sku: "+typeof(image_sku));
+
 var i;
 
 if ($("#chkImgSize").is(":checked")){prHei=480;prWid=640;prdSize="";} // set the properties]
 
 
 var beginnerLoopText = '\t\t\t<li class="sku clear">'+image_sku+'</li><!-- SKU goes here -->\n';
-if (image_sku.toString().search(/^j/i)>=0){beginnerLoopText+='\t\t\t<li class="coupedoor"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'_2door?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Coupedoor (2 door)" onerror=\'$(this).parent().remove();\' /></li>\n\t\t\t<li class="moredoor"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'_4door?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Moredoor (4 door)"  onerror=\'$(this).parent().remove();\' /></li>\n';}
-var innerLoopText='\t\t\t<li class="main-image"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="main image" /></li>\n';
+if (image_sku.toString().search(/^j/i)>=0){
+  beginnerLoopText+='\t\t\t<li class="coupedoor"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'_2door?'+colorParameters+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Coupedoor (2 door)" onerror=\'$(this).parent().remove();\' /></li>\n\t\t\t<li class="moredoor"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'_4door?'+colorParameters+prdSize+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="Moredoor (4 door)"  onerror=\'$(this).parent().remove();\' /></li>\n';}
+var innerLoopText='\t\t\t<li class="main-image"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+'?'+colorParameters+prdSize+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="main image" /></li>\n';
 
 
 	for(i=1; i<16; i++) //alt image loop
 	{
-	innerLoopText+='\t\t\t<li class="alt_'+i+'"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+"_alt"+i+'?'+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="alt'+i+'" onerror=\'$(this).parent().remove();\' /></li>\n';
+	innerLoopText+='\t\t\t<li class="alt_'+i+'"><img src="https://turn5.scene7.com/ir/render/Turn5Render/'+image_sku+"_alt"+i+'?'+colorParameters+prdSize+prdSize+'$&wid='+prWid+'&hei='+prHei+'" width="'+prWid+'" height="'+prHei+'" class="sku-image" title="alt'+i+'" onerror=\'$(this).parent().remove();\' /></li>\n';
 
 	} // end for alt-image loop
 
@@ -375,13 +377,10 @@ $("#clickhelp").click(function(){$("#spanid").slideToggle();});
 $("#allnone").click(function(){ $(".sku-name").click();});
 $(".mainall").click(function(){
 	$(".mainall").toggleClass("hidden");
-
-
-if (getQueryVariable("color")){alert("this is the color",getQueryVariable("color"));}
-
-
-
 }); // end the mainall toggle state, don't finish it ists stupid
+
+// put other stuff here
+
 
 
 
