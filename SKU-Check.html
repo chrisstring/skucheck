@@ -207,7 +207,7 @@ function longWayToRedemption(event)
 	/* do stuff to get the final array of products just like its the SKU check array and set inputToArray equal to it*/
 	var irName = $("#ir_name").val();
 
-	if(irName.search(/^(o-|p-|pv-|oj-|pj-|pjv-|ot-|pt-|ptv-|osilv-|psilv-|pvsilv-|oram-|pram-|pvram-|osierra-|psierra-|pvsierra-)/i)>=0)
+	if(irName.search(/^(o-|p-|pv-|oj-|pj-|pjv-|ot-|pt-|ptv-|osilv-|psilv-|pvsilv-|oram-|pram-|pvram-|osierra-|psierra-|pvsierra-|oram-|osierra|pram|psierra|auto-)/i)>=0) //JOB NAME SEARCH, update these
 		{
 
 		$("body").append("<div id='buttz'>Images are loading, please be patient...<br /><img src='http://pa1.narvii.com/6477/bee9774db9aa20ea9d04b14e213d20de7486dd8a_hq.gif' width='480' height='264' alt='jerrysmith' /></div>");
